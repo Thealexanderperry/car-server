@@ -119,3 +119,9 @@ mongoose
     .catch(err => console.log(err))
 ```
 
+### Schemas
+
+A well-defined document data structure that will be inseted into a collection. It is used to create a mocel, and based on ```SchemaTypes``` (aka: data types)
+
+
+

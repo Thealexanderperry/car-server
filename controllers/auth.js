@@ -1,83 +1,83 @@
-const router = require("express").Router()
+const router = require("express").Router();
 
 // TODO: build a /register controller
-const fs = require ('fs')
-const dbPath = ("./db/Users.json")
+const fs = require("fs");
+const dbPath = "./db/Users.json";
+const User = require("../models/User");
 
+router.post("/register", async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
 
-router.post("/register", (req, res) => {
-    try {
-        let { name, email, password} = req.body
-        // todo: grab a current snapshot of the database
-        let userDB = read()
-        // todo: check to see if user exists
-        let userExistArray = userDB.filter(user=> user.email === email)
-        if (userExistArray.length > 0) {
-            throw Error("username already exists.")
-        }
-        
-        // todo: add the new user ro the snapshot
-        userDB.push({ name, email, password });
-        
-        // todo: save the new snapshot to rewrite the file
-        const isSaved = save(userDB)
-        // todo: what is save file is false?
-        res.status(201).json({
-            message: isSaved === true ? `User created`: "We had a problem",
-        }) 
-    } catch (err) {
-        res.status(500).json({
-            message: `${err}`
-        })
+    // Checks if user entered all required values
+    if ((!name, !email, !password)) {
+      res.status(406).json({
+        message: `Invalid schema`,
+      });
+      throw new Error("The used has provided undefined schema values");
     }
-})
+
+    // Instantiates a new model instance with provided object values
+    const newUser = new User({ name, email, password });
+    // Saves the model document into the collection
+    await newUser.save();
+
+    res.status(201).json({
+      message: `User created!`,
+      newUser,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: `${err}`,
+    });
+  }
+});
 
 // TODO: build a /login controller
 
-router.post("/login", (req, res) => {
-    console.log("login route hit.")
-    try { 
-        let { email, password} = req.body
-        let userDB = read();
-        let userLogin = userDB.filter((user) => user.email === email);
-        console.log(userLogin)
-        // todo: if the user doesnt exist then throw an err username doesnt exist
-        // ! Checking to see if we have a user match
-        if(userLogin.length === 0){
-            throw Error("user does not exist")
-        }
+router.post("/login", async (req, res) => {
+  console.log("login route hit.");
+  try {
+    const { email, password } = req.body;
 
-        // ! Passwords do not match
-        if (userLogin[0].password !== password) {
-            throw Error("user password does not match")
-        }
-        res.status(200).json({
-            message: "Login success"
-        })
-    } catch (error){
-        res.status(500).json({
-            message: `${error}`,
-        })
+    const foundUser = await User.findOne({ email });
+
+    if (!foundUser) {
+      res.status(404).json({
+        message: `User not found`,
+      });
+    } else {
+      foundUser.password == password
+        ? res.status(200).json({
+            message: `User logged in`,
+            foundUser,
+          })
+        : res.status(403).json({
+            message: `Invalid password`,
+          });
     }
-})
-
-
+  } catch (error) {
+    res.status(500).json({
+      message: `${error}`,
+    });
+  }
+});
 
 function read() {
-    const file = fs.readFileSync(dbPath);
-    // converts a JSON object to object literal
-    const fileObj = JSON.parse(file);
-    return fileObj;
+  const file = fs.readFileSync(dbPath);
+  // converts a JSON object to object literal
+  const fileObj = JSON.parse(file);
+  return fileObj;
 }
 
 function save(data) {
-    fs.writeFileSync(dbPath, JSON.stringify(data), (error) => {
-        if (error) {
-            console.log(error)
-            return false
-        }
-    })
-    return true
+  fs.writeFileSync(dbPath, JSON.stringify(data), (error) => {
+    if (error) {
+      console.log(error);
+      return false;
+    }
+  });
+  return true;
 }
 
-module.exports = router
+module.exports = router;
